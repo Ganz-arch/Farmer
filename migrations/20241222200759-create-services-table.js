@@ -38,7 +38,7 @@ module.exports = {
         allowNull: false,
       },
       serviceOption: {
-        type: Sequelize.DECIMAL,
+        type: Sequelize.STRING,
         allowNull: false,
       },
       createdAt: {

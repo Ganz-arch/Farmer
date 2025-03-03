@@ -1,0 +1,134 @@
+const axios = require("axios");
+require("dotenv").config();
+
+const baseUrl = process.env.MONNIFY_BASE_URL;
+const apiKey = process.env.MONNIFY_API_KEY;
+const secretKey = process.env.MONNIFY_SECRET_KEY;
+const contractCode = process.env.MONNIFY_CONTRACT_CODE;
+
+/**
+ * Generate Monnify authentication token
+ */
+async function getAuthToken() {
+  const authHeader = Buffer.from(`${apiKey}:${secretKey}`).toString("base64");
+
+  try {
+    const response = await axios.post(
+      `${baseUrl}/auth/login`,
+      {},
+      {
+        headers: {
+          Authorization: `Basic ${authHeader}`,
+        },
+      }
+    );
+    return response.data.responseBody.accessToken;
+  } catch (error) {
+    console.error(
+      "Error getting auth token:",
+      error.response?.data || error.message
+    );
+    throw new Error("Failed to authenticate with Monnify.");
+  }
+}
+
+/**
+ * Initialize a payment request
+ */
+async function initializePayment(
+  amount,
+  customerEmail,
+  customerName,
+  paymentDescription
+) {
+  const authToken = await getAuthToken();
+
+  const payload = {
+    amount: amount,
+    customerName: customerName,
+    customerEmail: customerEmail,
+    paymentReference: `REF_${Date.now()}`, // Unique reference
+    paymentDescription: paymentDescription,
+    currencyCode: "NGN",
+    contractCode: contractCode,
+    redirectUrl: "https://your-redirect-url.com/payment-success", // Replace with your frontend URL
+  };
+
+  try {
+    const response = await axios.post(
+      `${baseUrl}/merchant/transactions/init-transaction`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      }
+    );
+    return response.data.responseBody;
+  } catch (error) {
+    console.error(
+      "Error initializing payment:",
+      error.response?.data || error.message
+    );
+    throw new Error("Failed to initialize payment.");
+  }
+}
+
+module.exports = { initializePayment };
+
+const express = require("express");
+const bodyParser = require("body-parser");
+const { initializePayment } = require("./monnifyService");
+
+const app = express();
+app.use(bodyParser.json());
+
+app.post("/initiate-payment", async (req, res) => {
+  const { amount, customerEmail, customerName, description } = req.body;
+
+  try {
+    const paymentData = await initializePayment(
+      amount,
+      customerEmail,
+      customerName,
+      description
+    );
+    res.status(200).json({
+      message: "Payment initialized successfully.",
+      paymentLink: paymentData.checkoutUrl, // Monnify payment link
+      paymentReference: paymentData.paymentReference,
+    });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ message: "Failed to initialize payment." });
+  }
+});
+
+const PORT = 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+app.post("/webhook", express.json(), (req, res) => {
+  const data = req.body;
+
+  // Verify webhook signature
+  const monnifySignature = req.headers["monnify-signature"];
+  const calculatedSignature = crypto
+    .createHmac("sha512", secretKey)
+    .update(JSON.stringify(data))
+    .digest("hex");
+
+  if (calculatedSignature !== monnifySignature) {
+    return res.status(400).json({ message: "Invalid signature." });
+  }
+
+  // Process payment status
+  const { paymentReference, paymentStatus } = data;
+  if (paymentStatus === "PAID") {
+    console.log(`Payment successful for reference: ${paymentReference}`);
+    // Update your database to mark the payment as successful
+  } else {
+    console.log(`Payment failed for reference: ${paymentReference}`);
+  }
+
+  res.status(200).json({ message: "Webhook processed successfully." });
+});

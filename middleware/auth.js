@@ -1,12 +1,13 @@
 const config = require("../config/config");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
-const {
-  blacklistedTokens,
-  isTokenBlacklisted,
-} = require("../controllers/v1/userController");
+const BlackListedToken = require('../models/BlackListedTokens')
+// const {
+//   blacklistedTokens,
+//   isTokenBlacklisted,
+// } = require("../controllers/v1/userController");
 
-blacklistedTokens
+// blacklistedTokens;
 
 const validateUserToken = (permissions = []) => {
   try {
@@ -18,7 +19,7 @@ const validateUserToken = (permissions = []) => {
       }
 
       const token = req.headers.authorization.split(" ")[1];
-      if (!token && isTokenBlacklisted(token)) {
+      if (!token && token===BlackListedToken.blacklistedToken) {
         return res
           .status(401)
           .json({ message: "Invalid token or blacklisted token" });

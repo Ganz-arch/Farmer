@@ -1,16 +1,25 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../db");
+const User = require("./User");
 
-const ServicesCategory = sequelize.define(
-  "ServicesCategory",
+const Otp = sequelize.define(
+  "Otp",
   {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    name: {
+    otpCode: {
       type: DataTypes.STRING,
+      allowNull: false,
+    },
+    isUsed: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    expiresAt: {
+      type: DataTypes.DATE,
       allowNull: false,
     },
   },
@@ -19,10 +28,6 @@ const ServicesCategory = sequelize.define(
   }
 );
 
-ServicesCategory.associate = (models) => {
-  ServicesCategory.hasMany(models.Services);
-};
+Otp.belongsTo(User);
 
-module.exports = ServicesCategory;
-
-
+module.exports = Otp;

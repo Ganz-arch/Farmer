@@ -21,7 +21,7 @@ const Market = sequelize.define(
       allowNull: false,
     },
     quantity: {
-      type: DataTypes.STRING,
+      type: DataTypes.DECIMAL,
       allowNull: false,
     },
     description: {
@@ -45,7 +45,7 @@ const Market = sequelize.define(
       allowNull: false,
     },
     deliveryOption: {
-      type: DataTypes.DECIMAL,
+      type: DataTypes.STRING,
       allowNull: false,
     },
   },

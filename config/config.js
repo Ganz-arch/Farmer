@@ -13,6 +13,21 @@ config = {
     dialect: "postgres",
   },
   jwtSecret: process.env.JWT_SECRET_KEY,
+  jwtSecret2: process.env.JWT_SECRET_KEY2,
+  email:{
+    resetTokenEpiration: process.env.RESET_TOKEN_EXPIRATION,
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
+    user: process.env.SMTP_USER,
+    password: process.env.SMTP_PASS,
+    baseUrl: process.env.BASE_URL,
+  },
+  monnify:{
+    apiKey: process.env.MONNIFY_API_KEY,
+    secretKey: process.env.MONNIFY_SECRET_KEY,
+    contractCode: process.env.MONNIFY_CONTRACT_CODE,
+    baseUrl: process.env.MONNIFY_BASE_URL,
+  }
 };
 
 module.exports = config;

@@ -1,28 +1,22 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../db");
+const { blacklistedTokens } = require("../controllers/v1/userController");
 
-const ServicesCategory = sequelize.define(
-  "ServicesCategory",
+const BlackListedToken = sequelize.define(
+  "BlackListedToken",
   {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    name: {
+    blacklistedToken: {
       type: DataTypes.STRING,
       allowNull: false,
     },
+    
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-ServicesCategory.associate = (models) => {
-  ServicesCategory.hasMany(models.Services);
-};
-
-module.exports = ServicesCategory;
-
-
+module.exports = BlackListedToken;

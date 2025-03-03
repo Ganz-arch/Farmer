@@ -40,7 +40,7 @@ const Services = sequelize.define(
       allowNull: false,
     },
     serviceOption: {
-      type: DataTypes.DECIMAL,
+      type: DataTypes.STRING,
       allowNull: false,
     },
   },

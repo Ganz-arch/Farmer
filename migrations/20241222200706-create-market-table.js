@@ -18,7 +18,7 @@ module.exports = {
         allowNull: false,
       },
       quantity: {
-        type: Sequelize.STRING,
+        type: Sequelize.DECIMAL,
         allowNull: false,
       },
       description: {
@@ -42,7 +42,7 @@ module.exports = {
         allowNull: false,
       },
       deliveryOption: {
-        type: Sequelize.DECIMAL,
+        type: Sequelize.STRING,
         allowNull: false,
       },
       createdAt: {

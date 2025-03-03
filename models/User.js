@@ -9,7 +9,7 @@ const User = sequelize.define(
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    name: {
+    fullName: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -21,6 +21,10 @@ const User = sequelize.define(
         isEmail: true,
       },
     },
+    isVerified:{
+      type:DataTypes.BOOLEAN,
+      defaultValue:false
+    },
     phoneNo: {
       type: DataTypes.DECIMAL,
       allowNull: false,
@@ -29,19 +33,35 @@ const User = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    confirmPassword: {
+      type: DataTypes.STRING,
+    },
     role: {
         type: DataTypes.STRING,
         allowNull: false,
       },
-    
+    passwordResetToken: {
+      type: DataTypes.STRING,
+      unique: true,
+    },
+    passwordResetTokenCreatedAt:{
+      type: DataTypes.DATE,
+    },
+    passwordResetTokenExpiresAt:{
+      type: DataTypes.DATE,
+    }
   },
-  
+  {
+    defaultScope:{
+      attributes:{exclude:['confirmPassword']} //Excludes confirm password by default
+    }
+  },
   {
     timestamps: true,
   }
 );
 
 User.associate = (models) => {
-  User.hasMany(models.MarketCategory), User.hasMany(models.ServicesCategory);
+  User.hasMany(models.Market,models.Services)
 };
 module.exports = User;
