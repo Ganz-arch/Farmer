@@ -74,18 +74,18 @@ app.use(
 // };
 // app.use((cors(corsOptions));
 
-app.all("*", (req, res, next) => {
-  const err = new CustomError(
-    `Can't find ${req.originalUrl} on server`,
-    404,
-    "Fail"
-  );
-  next(err);
-});
+// app.all("*", (req, res, next) => {
+//   const err = new CustomError(
+//     `Can't find ${req.originalUrl} on server`,
+//     404,
+//     "Fail"
+//   );
+//   next(err);
+// });
 
 // app.use(errorController());
 
-exports = app;
+// exports = app;
 
 
 
