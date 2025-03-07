@@ -62,6 +62,6 @@ const User = sequelize.define(
 );
 
 User.associate = (models) => {
-  User.hasMany(models.Market,models.Services)
+  User.hasMany(models.Market,models.Services,models.Otp)
 };
 module.exports = User;

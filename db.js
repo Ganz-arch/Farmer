@@ -1,5 +1,8 @@
 const { Sequelize } = require("sequelize");
-const config =require('./config/config')
+const config = require("./config/config");
+const dotenv = require("dotenv");
+
+dotenv.config();
 
 const sequelize = new Sequelize(
   config.development.database,
@@ -19,6 +22,10 @@ const sequelize = new Sequelize(
   } catch (error) {
     console.error("Unable to connect to the database:", error.message);
   }
+  console.log(
+    "Loading Sequelize configuration for:",
+    process.env.NODE_ENV || "development"
+  );
 })();
 
 module.exports = sequelize;

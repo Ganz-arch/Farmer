@@ -12,6 +12,19 @@ config = {
     port: process.env.DB_PORT,
     dialect: "postgres",
   },
+  production: {
+    username: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_NAME,
+    host: process.env.DB_HOST,
+    dialect: "postgres",
+    // dialectOptions: {
+    //   ssl: {
+    //     require: false,
+    //     rejectUnauthorized: false
+    //   }
+    // }
+  },
   jwtSecret: process.env.JWT_SECRET_KEY,
   jwtSecret2: process.env.JWT_SECRET_KEY2,
   email:{

@@ -179,6 +179,12 @@ const createUserHandler = async (req, res) => {
     });
 
     const otpSent = await sendOtp(user.id);
+    if (otpSent.createOtpErrorMessage){
+      res.status(400).json({
+        message: otpSent.createOtpErrorMessage,
+      });
+    }
+    
     const otp = otpSent.otp;
     await sendEmail({
       to: email,
@@ -212,7 +218,7 @@ const createUserHandler = async (req, res) => {
     // await sendVerificationEmail(user.email, token);
 
     res.status(201).json({
-      message: `${otpSent.message}`,
+      message: otpSent.sentOtpMessage,
       id: user.id,
       fullame: user.fullName,
       email: user.email,
@@ -234,8 +240,13 @@ const createUserHandler = async (req, res) => {
 const resentOtpHandler = async (req, res) => {
   try {
     const { email } = req.body
-    const sendOtp = await resendOtp(email)
-    const otpSent = await sendOtp(sendOtp.id)
+    const sentOtp = await resendOtp(email)
+    if (sentOtp.resendOtpErrorMessage){
+      res.status(400).json({
+        message: sentOtp.resendOtpErrorMessage,
+      });
+    }
+    const otpSent = await sendOtp(sentOtp.id)
     const otp = otpSent.otp;
     await sendEmail({
       to: email,
@@ -258,8 +269,8 @@ const resentOtpHandler = async (req, res) => {
       `,
     });
     res.status(200).json({
-      status: "Succesful",
-      message: `${otpSent.message}`,
+      status: "Successful",
+      message: otpSent.sentOtpMessage,
       emailmessage: `otp sent to ${email}`
     });
   } catch (error) {
@@ -273,7 +284,11 @@ const resentOtpHandler = async (req, res) => {
 const verifyOtpHandler = async (req, res) => {
   try {
     const { email, otp } = req.body;
-
+    const user = await User.findOne({
+      where:{
+        email,
+      }
+    })
     if (!email || !otp) {
       return res.status(400).json({
         Status: "Failed",
@@ -281,20 +296,41 @@ const verifyOtpHandler = async (req, res) => {
       });
     }
     const newUser = await verifyOtp(otp);
+    if (newUser.otpErrorMessage){
+      return res.status(400).json({
+        message: newUser.otpErrorMessage,
+      }); //Checks if otp is invalid or expired
+      
+    }
+    if (newUser.message){
+      // console.error('newUser:',newUser.message)
+      return res.status(500).json({
+        message: newUser.message,
+      }); //Checks for otp verification error with status code 500
+    }
+
     // Generate a verfication token
-    console.log(newUser.result[0].id)
-    const token = jwt.sign({ id: newUser.result[0].id }, config.jwtSecret2, {
+    const payload = {
+      id: user.id,
+      email: user.email,
+    }; 
+    const token = jwt.sign(payload, config.jwtSecret2, {
       expiresIn: "1h",
     });
 
     const jwtToken = res.cookie('jwtToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
-    res.status(200).json({
-      Status: "Succesful",
+
+    // console.log('token type:', typeof token, token);
+    // console.log('jwtToken type:', typeof jwtToken, jwtToken);
+
+    return res.status(200).json({
+      Status: "Successful",
       Message: "User Created Succesfully",
       data: { user: newUser },
-      Token: jwtToken,
+      token: token,
     });
   } catch (error) {
+    // console.log('verification error: ', error )
     return res.status(500).json({ message: error.message });
   }
 };
@@ -335,7 +371,7 @@ const verifyEmailHandler = async (req, res) => {
     user.isVerified = true;
     await user.save();
 
-    res.status(200).json({ message: "Email successfully verified" });
+    return res.status(200).json({ message: "Email successfully verified", user });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
@@ -407,7 +443,7 @@ const loginUserHandler = async (req, res) => {
     const token = jwt.sign(payload, config.jwtSecret, { expiresIn: "60d" });
 
     const jwtToken = res.cookie('jwtToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
-    return res.status(200).json({ jwtToken });
+    return res.status(200).json({ token });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }

@@ -1,5 +1,6 @@
 const crypto_1 = require("crypto");
 const { Op } = require("sequelize");
+const sequelize = require("../db");
 const Otp_1 = require("../models/Otp");
 const User = require("../models/User");
 
@@ -12,6 +13,7 @@ const sendOtp = async (userId) => {
     const otp = createOtp();
     const hashedOTP = crypto_1.createHash("sha256").update(otp).digest("hex");
     const expireAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+    expireAt.setMilliseconds(0);
     const insertAndUpdateOtpHandler = await Otp_1.upsert(
       {
         UserId: userId,
@@ -25,9 +27,9 @@ const sendOtp = async (userId) => {
       }
     );
     if (!insertAndUpdateOtpHandler) {
-      throw new Error("Unable to create OTP");
+      return { createOtpErrorMessage: "Unable to create OTP" };
     }
-    return { message: "OTP created successfully", otp };
+    return { sentOtpMessage: "OTP created successfully", otp };
   } catch (error) {
     return { message: error.message };
   }
@@ -36,6 +38,11 @@ const sendOtp = async (userId) => {
 const resendOtp = async (userEmail) => {
   try {
     const user = await User.findOne({ where: { email: userEmail } });
+    if (!user) {
+      return {
+        resendOtpErrorMessage: "Unable to resend otp. User does not exist",
+      };
+    }
     return user;
   } catch (error) {
     return { message: error.message };
@@ -44,54 +51,57 @@ const resendOtp = async (userEmail) => {
 
 const verifyOtp = async (otp) => {
   try {
-    const hashedOTP = crypto_1.default
-      .createHash("sha256")
-      .update(otp)
-      .digest("hex");
+    const hashedOTP = crypto_1.createHash("sha256").update(otp).digest("hex");
     const now = new Date();
     now.setMilliseconds(0);
     const result = await Otp_1.findOne({
       attributes: [
-        [Sequelize.col("UserTable.id"), "userId"],
-        [Sequelize.col("UserTable.fullName"), "username"],
-        [Sequelize.col("UserTable.email"), "email"],
+        [sequelize.col("User.id"), "userId"],
+        [sequelize.col("User.fullName"), "userFullname"],
+        [sequelize.col("User.email"), "email"],
         ["expiresAt", "expiresAt"],
       ],
       include: [
         {
           model: User, // Sequelize model for users
-          as: "UserTable", // Alias to match column reference in attributes
+          as: "User", // Alias to match column reference in attributes
           required: true, // INNER JOIN instead of LEFT JOIN
-          on: {
-            userId: Sequelize.col("UserTable.id"),
-          },
+          // on: {
+          //   userId: sequelize.col("User.id"),
+          // },
         },
       ],
       where: {
-        otp_code: hashedOTP,
-        is_used: false,
-        expires_at: { [Op.lte]: now }, // expires_at <= now
+        otpCode: hashedOTP,
+        isUsed: false,
+        expiresAt: { [Op.gte]: now }, // expires_at >= now
       },
-      limit: 1,
     });
-    if (result.length === 0) {
-      throw new Error("Invalid or expired OTP");
+
+    // console.log("ResultLength:", result);
+
+    if (!result) {
+      return { otpErrorMessage: "Invalid or expired OTP" };
     }
-    await Otp_1.update(
+    // console.log("Result:", result);
+    const userIdValue = result.get("userId");
+    console.log("Result:", userIdValue);
+
+    const verifiedOtp = await Otp_1.update(
       {
         otpCode: "", // Clear the OTP code
         isUsed: true, // Mark as used
       },
       {
         where: {
-          userId: result[0].id, // Find user by ID
+          UserId: userIdValue, // Find user by ID
         },
         returning: true, // Returns the updated record(s) (PostgreSQL only)
       }
     );
 
     // Find the user being verified
-    return result[1][0]; // `result[1]` contains the updated rows
+    return verifiedOtp;
   } catch (error) {
     console.error("Error in verifying otp:", error);
     return { message: error.message };
