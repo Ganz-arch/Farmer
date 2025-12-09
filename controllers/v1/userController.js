@@ -10,7 +10,7 @@ const { sendVerificationEmail } = require("../../utils/emailTransporter");
 
 //@desc POST Creates users
 //@route POST /users
-//@access private
+//@access public
 const createUserHandler = async (req, res) => {
   try {
     let { fullName, email, phoneNo, password, role } = req.body;
@@ -318,7 +318,7 @@ const verifyOtpHandler = async (req, res) => {
       expiresIn: "1h",
     });
 
-    const jwtToken = res.cookie('jwtToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    const jwtToken = res.cookie('jwtToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge: 7 * 24 * 60 * 60 * 1000, });
 
     // console.log('token type:', typeof token, token);
     // console.log('jwtToken type:', typeof jwtToken, jwtToken);
@@ -346,7 +346,7 @@ const verifyEmailHandler = async (req, res) => {
         .json({ message: "Params token not found" });
     }
 
-    const emailVerificationToken = req.params.token;
+    const {emailVerificationToken} = req.params.token;
     if (!emailVerificationToken) {
       return res
         .status(401)
@@ -394,6 +394,7 @@ const verifyEmailHandler = async (req, res) => {
 //@desc GET Retrieves a user
 //@route GET /v1/users/:id
 //@access private
+
 const getUserHandler = async (req, res) => {
   try {
     const { id } = req.params;

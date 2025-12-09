@@ -1,6 +1,9 @@
-const webhook = (req, res) => {
+const crypto = require('crypto')
+const Payment = require('../../models/Payment')
+
+const webhook = async (req, res) => {
   try {
-    const data = req.body;
+    const data = JSON.stringify(req.body);;
 
     // Verify webhook signature
     const monnifySignature = req.headers["monnify-signature"];
@@ -14,20 +17,25 @@ const webhook = (req, res) => {
     }
 
     // Process payment status
-    const { paymentReference, paymentStatus } = data;
-    if (paymentStatus === "PAID") {
-      console.log(`Payment successful for reference: ${paymentReference}`);
-      return res.status(200).json({
-        message: `Payment successful for reference: ${paymentReference}`,
-      });
-      // Update your database to mark the payment as successful
-    } else {
-      console.log(`Payment failed for reference: ${paymentReference}`);
-      res
-        .status(400)
-        .json({ message: `Payment failed for reference: ${paymentReference}` });
-    }
+    // const { paymentReference, paymentStatus } = data;
+    // if (paymentStatus === "PAID") {
+    //   console.log(`Payment successful for reference: ${paymentReference}`);
+    //   return res.status(200).json({
+    //     message: `Payment successful for reference: ${paymentReference}`,
+    //   });
+    //   // Update your database to mark the payment as successful
+    // } else {
+    //   console.log(`Payment failed for reference: ${paymentReference}`);
+    
+    //   res
+    //     .status(400)
+    //     .json({ message: `Payment failed for reference: ${paymentReference}` });
+    // }
 
+    await Payment.update(
+      { paymentStatus: payment.paymentStatus },
+      { where: { paymentReference: payment.paymentReference } }
+    );
     return res.status(200).json({ message: "Webhook processed successfully." });
   } catch (error) {
     return res.status(500).json({ message: error.message });

@@ -1,5 +1,3 @@
-"use strict";
-
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -50,21 +48,21 @@ app.use(limiter);
 
 // Secure Cookies & Sessions
 app.use(cookie_parser());
-app.use(
-  express_session({
-    store: new Memorystore({
-      checkPeriod: 86400000,
-    }),
-    secret: process.env.SESSION_SECRET, // Use .env file
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
-      maxAge: 86400000,
-    },
-  })
-);
+// app.use(
+//   express_session({
+//     store: new Memorystore({
+//       checkPeriod: 86400000,
+//     }),
+//     secret: process.env.SESSION_SECRET, // Use .env file
+//     resave: false,
+//     saveUninitialized: false,
+//     cookie: {
+//       secure: process.env.NODE_ENV === "production",
+//       httpOnly: true,
+//       maxAge: 86400000,
+//     },
+//   })
+// );
 
 // // CORS (Restrict to Specific Domains)
 // const corsOptions = {
